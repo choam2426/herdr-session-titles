@@ -10,6 +10,8 @@ licensed under the Apache License, Version 2.0:
 - mods/session-titles-pane/main.js and its icons are Herdr 0.1.11's shipped
   `pane` mod, modified to show the agent's session in the pane header and to
   shorten Windows home folders to "~".
+- mods/session-titles-tabs/main.js and its icons are Herdr 0.1.13's shipped
+  `tabs` mod, modified to label a tab holding an agent with the agent's session.
 
-Both modified files say so at their top. mods/*/session.js (which also holds
+Each modified file says so at its top. mods/*/session.js (which also holds
 the header's home-folder rule) and tests/ are original to this project.

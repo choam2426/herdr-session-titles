@@ -3,7 +3,8 @@
 Every coding agent's session, where you look for it. The Agents list names each
 row after the conversation the agent is on, beside its tab (`auth - Fix login
 redirect`), and each pane header shows it after the program (`Pi · Fix login
-redirect`), so two agents in one tab or one space are told apart at a glance.
+redirect`), and the tab bar labels an agent's tab with it, so two agents in
+one tab or one space are told apart at a glance.
 It reads the title each agent already gives its terminal: run with Pi, Claude
 Code and Codex; OpenCode's and Gemini CLI's formats are taken from their source.
 
@@ -11,7 +12,7 @@ Code and Codex; OpenCode's and Gemini CLI's formats are taken from their source.
 
 ## What you see
 
-Two mods, each a small change to a shipped one; everything else looks and
+Three mods, each a small change to a shipped one; everything else looks and
 behaves exactly like the shipped mod it replaces.
 
 - **Agents list** (`session-titles-agents`, from the shipped `agents`). Each
@@ -32,6 +33,11 @@ behaves exactly like the shipped mod it replaces.
   name, then folder. A home folder shows as `~` on Windows too (`C:\Users\x\repo`
   → `~\repo`), whatever the case of the drive and letters and with `\` or `/`;
   on macOS and Linux exactly as before (case-sensitive, `/` only).
+- **Tab bar** (`session-titles-tabs`, from the shipped `tabs`). A tab's label
+  is the session of the first agent pane in it that has one; otherwise the
+  shipped label: the tab's stored name, or for a tab Herdr never named (`tb<n>`)
+  the program's name (`Terminal` when there is none). A zoomed tab still gets
+  ` Z`. Icon, pill, status spinner or dot, and buttons are the shipped bar's.
 
 ## How it behaves
 
@@ -41,8 +47,8 @@ behaves exactly like the shipped mod it replaces.
   the shipped pill); in the header, the spinner, the `Needs you` pill and the
   done dot. Status never changes the wording.
 - Titles are live: when an agent renames its session (Pi's `/name`, Claude
-  Code's `/rename`, Codex's `/rename`), the row and header follow on Herdr's next
-  render; nothing polls.
+  Code's `/rename`, Codex's `/rename`), the row, header and tab follow on
+  Herdr's next render; nothing polls.
 - Clicks, hover buttons, pinning, sorting and keys are the shipped mods'.
 - The session comes only from the terminal title (`agents()[i].title`,
   `panes()[i].title`), never from transcripts. First, control characters become
@@ -73,7 +79,11 @@ behaves exactly like the shipped mod it replaces.
     `app`, or `Claude Code` (case-insensitive).
 - A session that is all digits still counts as a session, not as an automatic
   tab number.
-- The header shows a session only for agent panes (`program.agent` or `app`).
+- The header and the tab bar show a session only for agent panes
+  (`program.agent` or `app`).
+- The tab bar draws the session as the label; it never writes the tab's stored
+  name (`tab.rename`). A name someone gives a tab shows only while no agent in
+  it has a session.
 
 ## Built from
 
@@ -98,29 +108,45 @@ behaves exactly like the shipped mod it replaces.
   `.when(Boolean(s), el => el.child(div().flex_none().text_color(t.dim).child("·")).child(div().min_w(0).max_w(320).flex_shrink_1().truncate().text_color(t.foreground).child(s)))`;
   the folder gets `.min_w(0)`. `folder(cwd)` becomes `shortFolder(cwd, home(),
   window()?.platform === "windows")` from `session.js`.
+- `mods/session-titles-tabs/`: `mod.clone {name: "tabs", as:
+  "session-titles-tabs"}` (its `win-*` icons come along), then a modified-file
+  comment, `import { session } from "./session.js"`, and in the per-tab `item`:
+  `const mine = panes().filter(p => p.tab === c.id)`, the program from `mine`
+  as before, `const live = mine.filter(p => p.program?.agent ||
+  p.app).map(session).find(Boolean)`, and `const name = live || <the shipped
+  name>`.
 - `session.js`: `export function session(t)` with the rules above, and `export
   function rowDetail({ tabName, tabNamed, programName, session, fallback })`
   (when `tabNamed` is missing, as in older Herdr, a tab name of all digits counts
   as unnamed), and `export function shortFolder(cwd, home, windows)`. The same
-  file sits in both folders, so each mod stands alone.
+  file sits in every mod's folder, so each mod stands alone.
 - Layout: a copy of the person's layout (`layout.clone`) with the block whose
   `content.mod` is `agents` set to `session-titles-agents`, and
   `pane.header.content.mod` set to `session-titles-pane` (or a header added:
   `{ "content": { "mod": "session-titles-pane" }, "height": 30, "position":
-  "top", "reveal": "always" }`).
+  "top", "reveal": "always" }`), and the block with `"id": "tabs"` given
+  `"content": { "mod": "session-titles-tabs" }`.
 - No keys, no programs, no network. `herdr` calls are the shipped mods' own.
   Icons come from `mods/workspace-chrome/` (Herdr's shipped mod) and the pane's
   own folder.
 - `tests/session.test.mjs` (`npm test`): the title rules per harness, row
-  naming, and both `session.js` copies being identical.
+  naming, and every `session.js` copy being identical.
 
 ## Watch out
 
-- Both mods have `"place": "none"`: copying them changes nothing on screen
+- Every mod has `"place": "none"`: copying them changes nothing on screen
   until a layout names them. Installing means the layout step too.
-- Build from the person's own Herdr version: clone their shipped `agents` and
-  `pane` and apply the change, rather than copying this repo's `main.js` files
-  (clones of Herdr 0.1.11) onto a different Herdr.
+- Build from the person's own Herdr version: clone their shipped `agents`,
+  `pane` and `tabs` and apply the change, rather than copying this repo's
+  `main.js` files (clones of Herdr 0.1.11, and 0.1.13 for `tabs`) onto a
+  different Herdr.
+- The tab bar takes the close icon from `mods/pane/` and the spinner from
+  `mods/workspace-chrome/`, as the shipped bar does.
+- Herdr sets a tab's stored name once, when the tab is made (the terminal's
+  name or its program's name), and doesn't follow the title. Don't fix that by
+  calling `tab.rename` from the mod: drawing the session is enough.
+- Claude Code titles its terminal `Claude Code` until the conversation has a
+  title; that reads as no session, so a new tab shows its stored name until then.
 - `flex_shrink()` takes a number in gpui-kit; use `flex_shrink_1()`.
 - Use `tab.named`, not the tab name's shape, to tell a named tab: a person may
   name a tab `2025`.
@@ -134,13 +160,14 @@ behaves exactly like the shipped mod it replaces.
   makes an unnamed Pi session read as part of it.
 - The Gemini titles are padded with spaces to 80 characters, and Herdr may know
   Gemini (and OpenCode) only as `node`: recognise them by the title's shape too.
-- Run on Windows with Herdr 0.1.11, Pi, Claude Code and Codex. OpenCode and
+- Run on Windows with Herdr 0.1.11, Pi, Claude Code and Codex; the tab bar on
+  macOS with Herdr 0.1.13 and Claude Code. OpenCode and
   Gemini CLI formats come from their source; macOS and Linux are untested
   (nothing in the code is platform-specific).
 
 ## Done when
 
-- `herdr-app check` passes for both mods and `herdr-app status` shows
+- `herdr-app check` passes for every mod and `herdr-app status` shows
   `errors: []` with the layout using them; `npm test` passes.
 - A Pi agent in a tab named `auth` on the session `Fix login redirect` reads
   `auth - Fix login redirect` in the Agents list and `Pi · Fix login redirect`
@@ -154,3 +181,8 @@ behaves exactly like the shipped mod it replaces.
 - An agent at a shell prompt or still starting (title is a path or the
   program's name) shows what the shipped list shows.
 - The Agents list's sort button still opens its menu.
+- A Claude Code tab whose stored name is `Claude Code` reads `Fix login
+  redirect` after `/rename Fix login redirect`, while `herdr-app ls` still
+  shows the stored name; a tab running only a shell shows its stored name.
+- Double-click, drag-to-move, close, scrolling, `+` and the panel buttons work
+  as in the shipped tab bar.

@@ -1,6 +1,7 @@
 // The session an agent is on, from the title it gives its terminal, and how a
 // row names it. Kept beside each mod that uses it (session-titles-agents,
-// session-titles-pane), so each folder stands alone; the copies are the same.
+// session-titles-pane, session-titles-tabs), so each folder stands alone; the
+// copies are the same.
 //
 // Each harness titles its terminal its own way (Pi, Claude Code and Codex
 // checked running; OpenCode and Gemini CLI from their source):

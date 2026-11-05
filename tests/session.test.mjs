@@ -1,5 +1,5 @@
 // node tests/session.test.mjs: the title rules per harness, how a row is named,
-// and both mods carrying the same session.js.
+// and every mod carrying the same session.js.
 import { readFileSync } from "node:fs";
 import { session, rowDetail, shortFolder } from "../mods/session-titles-agents/session.js";
 
@@ -11,6 +11,7 @@ const check = (what, got, want) => {
 
 const copy = (m) => readFileSync(new URL(`../mods/${m}/session.js`, import.meta.url), "utf8");
 check("session.js copies match", copy("session-titles-agents") === copy("session-titles-pane"), true);
+check("session.js copies match (tabs)", copy("session-titles-agents") === copy("session-titles-tabs"), true);
 
 const P = {
   pi: { app: "pi", program: { name: "Pi", key: "pi" } },
